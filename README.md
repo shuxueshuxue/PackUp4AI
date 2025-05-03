@@ -6,6 +6,8 @@ Developed by **Jeffry**.
 
 ---
 
+![](assets/example.png)
+
 ## 🤔 What it Does
 
 When interacting with Large Language Models (LLMs) or AI chatbots, providing relevant context is crucial for getting good results. `packUp4AI` helps you gather this context directly from your Obsidian vault.
