@@ -6,7 +6,5 @@
 	"minAppVersion": "1.6.7",
 	"description": "Collect related notes based on links/backlinks to provide focused context for external AI chatbots. Explore note relationships visually and export the bundle.",
 	"author": "Jeffry",
-	"authorUrl": "",
-	"helpUrl": "",
 	"isDesktopOnly": false
 }

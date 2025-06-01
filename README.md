@@ -23,7 +23,7 @@ This makes it much easier to copy-paste relevant information from your vault int
 
 ## ✨ Features
 
-*   **Interactive Relationship Graph:** Uses D3.js to visualize how collected notes are connected.
+*   **Interactive Relationship Graph:** Uses D3.js (included locally) to visualize how collected notes are connected.
 *   **Configurable Collection:**
     *   Set **Collection Depth** (1-10 hops).
     *   Toggle **Include Backlinks**.
@@ -51,4 +51,9 @@ This makes it much easier to copy-paste relevant information from your vault int
     *   **Bottom Buttons:**
         *   `Collect & Copy to Clipboard`: Gathers the notes based on current settings and copies the formatted bundle to your clipboard.
         *   `Collect & Save to File`: Gathers the notes and saves the bundle to the specified `Output Filename` in your vault.
+
+## 📦 Technical Details
+
+*   **Offline Support:** D3.js visualization library is included locally (d3.min.js v7.9.0) to ensure the plugin works without internet connection.
+*   **No External Dependencies:** All required libraries are bundled with the plugin for complete offline functionality.
 

@@ -1,9 +1,8 @@
-const { Plugin, PluginSettingTab, Notice, Modal, Setting, TFile } = require('obsidian');
+const { Plugin, PluginSettingTab, Notice, Modal, Setting, TFile, normalizePath, getFrontMatterInfo } = require('obsidian');
 
 // --- Constants ---
-const D3_CDN_URL = 'https://d3js.org/d3.v7.min.js'; // Use CDN
 const PLUGIN_NAME = 'packup4AI';
-const MODAL_TITLE = 'packup4AI Notes Explorer';
+const MODAL_TITLE = 'Packup4AI notes explorer';
 
 class Packup4AIPlugin extends Plugin {
   settings = {
@@ -14,22 +13,26 @@ class Packup4AIPlugin extends Plugin {
   };
 
   async onload() {
-    console.log(`Loading ${PLUGIN_NAME}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Loading ${PLUGIN_NAME}`);
+    }
 
     // Load settings
     this.settings = Object.assign({}, this.settings, await this.loadData());
 
     // Register command
     this.addCommand({
-      id: 'open-packup4ai-notes',
-      name: 'Open packup4AI Notes',
-      callback: () => {
+      id: 'collect-notes',
+      name: 'Collect notes for AI context',
+      checkCallback: (checking) => {
         const file = this.app.workspace.getActiveFile();
-        if (!file) {
-          new Notice("Please open a note first before using packup4AI.");
-          return;
+        if (file) {
+          if (!checking) {
+            new PackupModal(this.app, this).open();
+          }
+          return true;
         }
-        new PackupModal(this.app, this).open();
+        return false;
       }
     });
 
@@ -55,7 +58,9 @@ class Packup4AIPlugin extends Plugin {
 
   // Core collection function
   async collectRelatedNotes(startFile, maxDepth) {
-    console.log(`Starting collection from ${startFile.path} with depth ${maxDepth}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Starting collection from ${startFile.path} with depth ${maxDepth}`);
+    }
 
     const queue = [{ file: startFile, depth: 0 }];
     const visited = new Set([startFile.path]);
@@ -112,7 +117,9 @@ class Packup4AIPlugin extends Plugin {
       throw new Error(`Collection failed: ${error.message}`);
     }
 
-    console.log(`Collected ${collected.length} notes`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Collected ${collected.length} notes`);
+    }
     return collected;
   }
 
@@ -158,11 +165,20 @@ class Packup4AIPlugin extends Plugin {
   }
 
   // Simple word counter that works with different languages
-  countWords(text) {
+  countWords(text, file = null) {
     if (!text) return 0;
 
-    // Remove frontmatter
-    const cleanText = text.replace(/^---\s*[\s\S]*?---\s*/, '').trim();
+    // Remove frontmatter using Obsidian's built-in function
+    let cleanText = text;
+    if (file) {
+      const frontmatter = getFrontMatterInfo(text);
+      if (frontmatter.exists) {
+        cleanText = text.substring(frontmatter.contentStart).trim();
+      }
+    } else {
+      // Fallback for cases where file is not available
+      cleanText = text.replace(/^---\s*[\s\S]*?---\s*/, '').trim();
+    }
 
     // Detect if the text contains significant amount of CJK characters
     const cjkRegex = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/g;
@@ -190,7 +206,7 @@ class Packup4AIPlugin extends Plugin {
     }
 
     // Count words for each note
-    const wordCounts = collected.map(item => this.countWords(item.content));
+    const wordCounts = collected.map(item => this.countWords(item.content, item.file));
 
     // Calculate statistics
     const totalWords = wordCounts.reduce((a, b) => a + b, 0);
@@ -238,9 +254,9 @@ class Packup4AIPlugin extends Plugin {
       if (!group) continue;
 
       let sectionTitle;
-      if (d === 0) sectionTitle = `Starting File: ${startName}`;
-      else if (d === 1) sectionTitle = `Directly Linked Files`;
-      else sectionTitle = `Files ${d} Hops Away`;
+      if (d === 0) sectionTitle = `Starting file: ${startName}`;
+      else if (d === 1) sectionTitle = `Directly linked files`;
+      else sectionTitle = `Files ${d} hops away`;
 
       md += `## ${sectionTitle} (Depth ${d})\n\n`;
 
@@ -250,9 +266,10 @@ class Packup4AIPlugin extends Plugin {
         md += `Path: ${item.file.path}\n\n`;
 
         // Clean content (remove frontmatter)
-        const clean = item.content
-          .replace(/^---\s*[\s\S]*?---\s*/, '')
-          .trim();
+        const frontmatter = getFrontMatterInfo(item.content);
+        const clean = frontmatter.exists ? 
+          item.content.substring(frontmatter.contentStart).trim() : 
+          item.content.trim();
 
         // Wrap content in markdown code block with 4 backticks
         md += `\`\`\`\`markdown
@@ -286,29 +303,38 @@ ${clean}
     }
   }
 
-  // Load D3.js from CDN
+  // Load D3.js from local file
   async loadD3() {
     // Return immediately if D3 is already loaded
     if (window.d3) return true;
 
-    return new Promise((resolve, reject) => {
-        console.log("Loading D3.js from CDN...");
-        const script = document.createElement('script');
-        script.src = D3_CDN_URL;
-        script.async = true;
-
-        script.onload = () => {
-          console.log("D3.js loaded successfully from CDN");
-          resolve(true);
-        };
-
-        script.onerror = (error) => {
-          console.error("Failed to load D3.js from CDN:", error);
-          reject(new Error("Failed to load D3.js visualization library"));
-        };
-
-        document.head.appendChild(script);
-    });
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Loading D3.js from local file...");
+      }
+      
+      // Read D3.js content from local file
+      const d3Content = await this.app.vault.adapter.read('.obsidian/plugins/packup4ai/d3.min.js');
+      
+      // Create and execute script element with the D3 content
+      const script = document.createElement('script');
+      script.textContent = d3Content;
+      document.head.appendChild(script);
+      
+      // Verify D3 was loaded
+      if (window.d3) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log("D3.js loaded successfully from local file");
+        }
+        return true;
+      } else {
+        throw new Error("D3.js failed to initialize after loading");
+      }
+      
+    } catch (error) {
+      console.error("Failed to load D3.js from local file:", error);
+      throw new Error("Failed to load D3.js visualization library");
+    }
   }
 }
 
@@ -322,10 +348,9 @@ class Packup4AISettingTab extends PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: `${PLUGIN_NAME} Settings` });
 
     new Setting(containerEl)
-      .setName("Max Collection Depth")
+      .setName("Max collection depth")
       .setDesc("How many links deep to collect notes from the starting point.")
       .addSlider(slider => slider
         .setLimits(1, 10, 1) // Increased to 10
@@ -337,7 +362,7 @@ class Packup4AISettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("Include Backlinks")
+      .setName("Include backlinks")
       .setDesc("Also collect notes that link to the notes being processed.")
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.includeBacklinks)
@@ -347,18 +372,19 @@ class Packup4AISettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName("Default Output Filename")
+      .setName("Default output filename")
       .setDesc("Filename for the exported Markdown file.")
       .addText(text => text
         .setPlaceholder("e.g., packup4ai-output.md")
         .setValue(this.plugin.settings.outputFile)
         .onChange(async (value) => {
-          this.plugin.settings.outputFile = value.endsWith('.md') ? value : `${value}.md`;
+          const normalized = normalizePath(value.endsWith('.md') ? value : `${value}.md`);
+          this.plugin.settings.outputFile = normalized;
           await this.plugin.saveSettings();
         }));
 
     new Setting(containerEl)
-      .setName("Excluded Files/Folders")
+      .setName("Excluded files/folders")
       .setDesc("Paths to exclude from collection (one per line). Folders must end with '/'.")
       .addTextArea(text => text
         .setPlaceholder("e.g., Templates/\nDrafts/ignore.md")
@@ -366,7 +392,7 @@ class Packup4AISettingTab extends PluginSettingTab {
         .onChange(async (value) => {
           this.plugin.settings.excludePaths = value
             .split("\n")
-            .map(p => p.trim())
+            .map(p => normalizePath(p.trim()))
             .filter(p => p.length > 0);
           await this.plugin.saveSettings();
         }));
@@ -430,7 +456,7 @@ class PackupModal extends Modal {
   createButtons(footer) {
     // Copy to clipboard button
     const copyBtn = footer.createEl('button', {
-      text: 'Collect & Copy to Clipboard',
+      text: 'Collect & copy to clipboard',
       cls: 'mod-cta'
     });
 
@@ -449,7 +475,7 @@ class PackupModal extends Modal {
 
     // Save to file button
     const saveBtn = footer.createEl('button', {
-      text: 'Collect & Save to File'
+      text: 'Collect & save to file'
     });
 
     saveBtn.addEventListener('click', async () => {
@@ -509,7 +535,9 @@ class PackupModal extends Modal {
     this.updateStatus('Collecting notes...');
 
     try {
-      console.log(`Starting collection with depth ${this.plugin.settings.maxDepth}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Starting collection with depth ${this.plugin.settings.maxDepth}`);
+      }
       const data = await this.plugin.collectRelatedNotes(
         this.currentFile,
         this.plugin.settings.maxDepth
@@ -531,14 +559,20 @@ class PackupModal extends Modal {
       this.updateStatus(`Collected ${data.length} notes.`);
       this.updateWordStats();
 
-      console.log(`Collection completed: ${data.length} notes`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Collection completed: ${data.length} notes`);
+      }
 
       // Only render visualization if the collection changed
       if (hasChanged) {
-        console.log("Collection changed, updating visualization");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Collection changed, updating visualization");
+        }
         this.renderVisualization();
       } else {
-        console.log("Collection unchanged, skipping visualization refresh");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Collection unchanged, skipping visualization refresh");
+        }
       }
 
     } catch (error) {
@@ -607,16 +641,16 @@ class PackupModal extends Modal {
     pane.empty();
 
     // Title
-    pane.createEl('h3', { text: 'Collection Settings' });
+    pane.createEl('h3', { text: 'Collection settings' });
 
     // Starting note info
     pane.createEl('div', {
-      text: `Starting Note: ${this.currentFile.basename}`
+      text: `Starting note: ${this.currentFile.basename}`
     });
 
     // Depth slider with visual indicator
     const depthSetting = new Setting(pane)
-      .setName('Collection Depth');
+      .setName('Collection depth');
 
     // Visual depth indicator
     const depthDisplay = createSpan({
@@ -645,7 +679,7 @@ class PackupModal extends Modal {
 
     // Include backlinks toggle
     new Setting(pane)
-      .setName('Include Backlinks')
+      .setName('Include backlinks')
       .setDesc('Also collect notes that link to/from the starting note.')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.includeBacklinks)
@@ -660,12 +694,13 @@ class PackupModal extends Modal {
 
     // Output filename
     new Setting(pane)
-      .setName('Output Filename')
+      .setName('Output filename')
       .setDesc('Filename for saving the collected notes.')
       .addText(text => text
         .setValue(this.plugin.settings.outputFile)
         .onChange(async (value) => {
-          this.plugin.settings.outputFile = value.endsWith('.md') ? value : `${value}.md`;
+          const normalized = normalizePath(value.endsWith('.md') ? value : `${value}.md`);
+          this.plugin.settings.outputFile = normalized;
           await this.plugin.saveSettings();
         })
       );
@@ -702,7 +737,7 @@ class PackupModal extends Modal {
     pane.empty();
 
     // Title
-    pane.createEl('h3', { text: 'Note Relationship Graph' });
+    pane.createEl('h3', { text: 'Note relationship graph' });
 
     // Container for visualization
     this.vizContainer = pane.createDiv({ cls: 'packup4ai-viz-container' });
@@ -732,7 +767,7 @@ class PackupModal extends Modal {
           this.vizContainer.empty();
           this.vizContainer.createEl('div', {
             cls: 'packup4ai-error',
-            text: 'Failed to load D3.js. Visualization not available.'
+            text: 'Failed to load D3.js from local file. Visualization not available.'
           });
           return;
         }
@@ -741,7 +776,7 @@ class PackupModal extends Modal {
       // Convert data to D3 format
       const nodes = this.collectedData.map(item => {
         // Count words for node sizing
-        const wordCount = this.plugin.countWords(item.content);
+        const wordCount = this.plugin.countWords(item.content, item.file);
 
         return {
           id: item.file.path,
