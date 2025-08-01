@@ -4,8 +4,7 @@
   "description": "Obsidian plugin for collecting related notes",
   "main": "main.js",
   "scripts": {
-    "build": "webpack --mode production",
-    "dev": "webpack --mode development --watch"
+    "build": "node scripts/build.js"
   },
   "keywords": [],
   "author": "",
