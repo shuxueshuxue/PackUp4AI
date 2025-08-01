@@ -1,3 +1,34 @@
-data.json
--p
-.claude
+# Built files
+dist/
+main.js
+
+# Node modules
+node_modules/
+
+# Build artifacts
+*.log
+.DS_Store
+
+# IDE files
+.idea/
+.vscode/
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Old/backup files to clean up
+main-bundled.js
+main-original.js
+main_edited.js
+build-*.js
+!scripts/build.js
+
+# Package files (keep only package.json)
+package-lock.json
+yarn.lock
+
+# Other build configs we tried
+webpack.config.js
+esbuild.config.mjs
