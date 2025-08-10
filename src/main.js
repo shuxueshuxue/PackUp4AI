@@ -1,5 +1,4 @@
 const { Plugin, PluginSettingTab, Notice, Modal, Setting, TFile, normalizePath, getFrontMatterInfo } = require('obsidian');
-import * as d3 from 'd3';
 
 // --- Constants ---
 const PLUGIN_NAME = 'packup4AI';
@@ -12,18 +11,26 @@ class Packup4AIPlugin extends Plugin {
     outputFile: "packup4ai-output.md",
     includeBacklinks: true,
   };
+  
+  d3 = null; // Will be loaded in onload()
 
   async onload() {
     // if (process.env.NODE_ENV === 'development') {
     //   console.log(`Loading ${PLUGIN_NAME}`);
     // }
     
-    // Load D3 into window for visualization
-    if (!window.d3) {
-      window.d3 = d3;
+    // Dynamically import D3 only when plugin loads
+    try {
+      const d3Module = await import('d3');
+      this.d3 = d3Module;
+      // Make D3 available to modal windows
+      window.d3 = this.d3;
       // if (process.env.NODE_ENV === 'development') {
       //   console.log('D3 loaded successfully into plugin');
       // }
+    } catch (error) {
+      new Notice('Failed to load D3 visualization library');
+      // console.error('Failed to load D3:', error);
     }
 
     // Load settings
@@ -66,13 +73,16 @@ class Packup4AIPlugin extends Plugin {
   }
 
   onunload() {
-    // Clean up D3 from window
+    // Clean up D3 references
     if (window.d3) {
       delete window.d3;
-      // if (process.env.NODE_ENV === 'development') {
-      //   console.log('D3 cleaned up from window');
-      // }
     }
+    if (this.d3) {
+      this.d3 = null;
+    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('D3 cleaned up');
+    // }
   }
 
   // Core collection function
