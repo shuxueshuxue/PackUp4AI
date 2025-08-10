@@ -1,6 +1,8 @@
 # Built files
 dist/
-main.js
+
+# Plugin data (managed by Obsidian)
+data.json
 
 # Node modules
 node_modules/
@@ -17,18 +19,3 @@ node_modules/
 *.tmp
 *.bak
 *~
-
-# Old/backup files to clean up
-main-bundled.js
-main-original.js
-main_edited.js
-build-*.js
-!scripts/build.js
-
-# Package files (keep only package.json)
-package-lock.json
-yarn.lock
-
-# Other build configs we tried
-webpack.config.js
-esbuild.config.mjs

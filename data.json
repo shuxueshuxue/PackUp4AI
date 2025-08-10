@@ -1,8 +1,0 @@
-{
-  "maxDepth": 1,
-  "excludePaths": [
-    "packup4ai-output.md"
-  ],
-  "outputFile": "packup4ai-output.md",
-  "includeBacklinks": true
-}

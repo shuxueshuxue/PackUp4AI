@@ -1,5 +1,5 @@
 const { Plugin, PluginSettingTab, Notice, Modal, Setting, TFile, normalizePath, getFrontMatterInfo } = require('obsidian');
-const d3 = require('d3');
+import * as d3 from 'd3';
 
 // --- Constants ---
 const PLUGIN_NAME = 'packup4AI';
@@ -16,6 +16,14 @@ class Packup4AIPlugin extends Plugin {
   async onload() {
     if (process.env.NODE_ENV === 'development') {
       console.log(`Loading ${PLUGIN_NAME}`);
+    }
+    
+    // Load D3 into window for visualization
+    if (!window.d3) {
+      window.d3 = d3;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('D3 loaded successfully into plugin');
+      }
     }
 
     // Load settings
@@ -58,10 +66,12 @@ class Packup4AIPlugin extends Plugin {
   }
 
   onunload() {
-    // Clean up D3 from global context
-    const global = globalThis || window || this || {};
-    if (global.d3) {
-      delete global.d3;
+    // Clean up D3 from window
+    if (window.d3) {
+      delete window.d3;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('D3 cleaned up from window');
+      }
     }
   }
 
