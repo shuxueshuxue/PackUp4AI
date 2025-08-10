@@ -1,6 +1,6 @@
 {
   "name": "obsidian-packup4ai",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Obsidian plugin for collecting related notes",
   "main": "main.js",
   "scripts": {
