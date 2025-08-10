@@ -14,16 +14,16 @@ class Packup4AIPlugin extends Plugin {
   };
 
   async onload() {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Loading ${PLUGIN_NAME}`);
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log(`Loading ${PLUGIN_NAME}`);
+    // }
     
     // Load D3 into window for visualization
     if (!window.d3) {
       window.d3 = d3;
-      if (process.env.NODE_ENV === 'development') {
-        console.log('D3 loaded successfully into plugin');
-      }
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.log('D3 loaded successfully into plugin');
+      // }
     }
 
     // Load settings
@@ -69,17 +69,17 @@ class Packup4AIPlugin extends Plugin {
     // Clean up D3 from window
     if (window.d3) {
       delete window.d3;
-      if (process.env.NODE_ENV === 'development') {
-        console.log('D3 cleaned up from window');
-      }
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.log('D3 cleaned up from window');
+      // }
     }
   }
 
   // Core collection function
   async collectRelatedNotes(startFile, maxDepth) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Starting collection from ${startFile.path} with depth ${maxDepth}`);
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log(`Starting collection from ${startFile.path} with depth ${maxDepth}`);
+    // }
 
     const queue = [{ file: startFile, depth: 0 }];
     const visited = new Set([startFile.path]);
@@ -120,7 +120,7 @@ class Packup4AIPlugin extends Plugin {
               });
               queue.push({ file: neighbor, depth: depth + 1 });
             } catch (error) {
-              console.warn(`Error reading file ${neighbor.path}:`, error);
+              // console.warn(`Error reading file ${neighbor.path}:`, error);
               collected.push({
                 file: neighbor,
                 depth: depth + 1,
@@ -132,13 +132,13 @@ class Packup4AIPlugin extends Plugin {
         }
       }
     } catch (error) {
-      console.error("Collection error:", error);
+      // console.error("Collection error:", error);
       throw new Error(`Collection failed: ${error.message}`);
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Collected ${collected.length} notes`);
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log(`Collected ${collected.length} notes`);
+    // }
     return collected;
   }
 
@@ -316,7 +316,7 @@ ${clean}
       }
       return true;
     } catch (error) {
-      console.error(`Error writing file ${filename}:`, error);
+      // console.error(`Error writing file ${filename}:`, error);
       new Notice(`Error saving file: ${error.message}`);
       return false;
     }
@@ -521,9 +521,9 @@ class PackupModal extends Modal {
     this.updateStatus('Collecting notes...');
 
     try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Starting collection with depth ${this.plugin.settings.maxDepth}`);
-      }
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.log(`Starting collection with depth ${this.plugin.settings.maxDepth}`);
+      // }
       const data = await this.plugin.collectRelatedNotes(
         this.currentFile,
         this.plugin.settings.maxDepth
@@ -545,24 +545,24 @@ class PackupModal extends Modal {
       this.updateStatus(`Collected ${data.length} notes.`);
       this.updateWordStats();
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Collection completed: ${data.length} notes`);
-      }
+      // if (process.env.NODE_ENV === 'development') {
+      //   console.log(`Collection completed: ${data.length} notes`);
+      // }
 
       // Only render visualization if the collection changed
       if (hasChanged) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log("Collection changed, updating visualization");
-        }
+        // if (process.env.NODE_ENV === 'development') {
+        //   console.log("Collection changed, updating visualization");
+        // }
         this.renderVisualization();
       } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log("Collection unchanged, skipping visualization refresh");
-        }
+        // if (process.env.NODE_ENV === 'development') {
+        //   console.log("Collection unchanged, skipping visualization refresh");
+        // }
       }
 
     } catch (error) {
-      console.error('Collection error:', error);
+      // console.error('Collection error:', error);
       this.updateStatus(`Error: ${error.message}`);
       new Notice(`Collection error: ${error.message}`);
     } finally {
@@ -885,7 +885,7 @@ class PackupModal extends Modal {
       this.simulation = simulation;
 
     } catch (error) {
-      console.error('Visualization error:', error);
+      // console.error('Visualization error:', error);
       this.vizContainer.empty();
       this.vizContainer.createEl('div', {
         cls: 'packup4ai-error',
