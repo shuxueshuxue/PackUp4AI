@@ -24,7 +24,6 @@ class Packup4AIPlugin extends Plugin {
       const d3Module = await import('d3');
       this.d3 = d3Module;
       // Make D3 available to modal windows
-      window.d3 = this.d3;
       // if (process.env.NODE_ENV === 'development') {
       //   console.log('D3 loaded successfully into plugin');
       // }
@@ -73,16 +72,10 @@ class Packup4AIPlugin extends Plugin {
   }
 
   onunload() {
-    // Clean up D3 references
-    if (window.d3) {
-      delete window.d3;
-    }
+    // Clean up D3 reference
     if (this.d3) {
       this.d3 = null;
     }
-    // if (process.env.NODE_ENV === 'development') {
-    //   console.log('D3 cleaned up');
-    // }
   }
 
   // Core collection function
@@ -755,8 +748,8 @@ class PackupModal extends Modal {
     }
 
     try {
-      // D3 will be bundled, so we just need to check if it exists
-      if (!window.d3) {
+      // Check if D3 is available from the plugin
+      if (!this.plugin.d3) {
         this.vizContainer.empty();
         this.vizContainer.createEl('div', {
           cls: 'packup4ai-error',
@@ -765,8 +758,8 @@ class PackupModal extends Modal {
         return;
       }
       
-      // Use d3 from window
-      const d3 = window.d3;
+      // Use d3 from the plugin instance
+      const d3 = this.plugin.d3;
 
       // Convert data to D3 format
       const nodes = this.collectedData.map(item => {
