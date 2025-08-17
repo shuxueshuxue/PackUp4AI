@@ -52,8 +52,3 @@ This makes it much easier to copy-paste relevant information from your vault int
         *   `Collect & Copy to Clipboard`: Gathers the notes based on current settings and copies the formatted bundle to your clipboard.
         *   `Collect & Save to File`: Gathers the notes and saves the bundle to the specified `Output Filename` in your vault.
 
-## 📦 Technical Details
-
-*   **Offline Support:** D3.js visualization library is included locally (d3.min.js v7.9.0) to ensure the plugin works without internet connection.
-*   **No External Dependencies:** All required libraries are bundled with the plugin for complete offline functionality.
-
