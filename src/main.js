@@ -1,4 +1,5 @@
 const { Plugin, PluginSettingTab, Notice, Modal, Setting, TFile, normalizePath, getFrontMatterInfo } = require('obsidian');
+const d3 = require('d3');
 
 // --- Constants ---
 const PLUGIN_NAME = 'packup4AI';
@@ -12,25 +13,10 @@ class Packup4AIPlugin extends Plugin {
     includeBacklinks: true,
   };
   
-  d3 = null; // Will be loaded in onload()
-
   async onload() {
     // if (process.env.NODE_ENV === 'development') {
     //   console.log(`Loading ${PLUGIN_NAME}`);
     // }
-    
-    // Dynamically import D3 only when plugin loads
-    try {
-      const d3Module = await import('d3');
-      this.d3 = d3Module;
-      // Make D3 available to modal windows
-      // if (process.env.NODE_ENV === 'development') {
-      //   console.log('D3 loaded successfully into plugin');
-      // }
-    } catch (error) {
-      new Notice('Failed to load D3 visualization library');
-      // console.error('Failed to load D3:', error);
-    }
 
     // Load settings
     this.settings = Object.assign({}, this.settings, await this.loadData());
@@ -72,10 +58,7 @@ class Packup4AIPlugin extends Plugin {
   }
 
   onunload() {
-    // Clean up D3 reference
-    if (this.d3) {
-      this.d3 = null;
-    }
+    // Cleanup if needed
   }
 
   // Core collection function
@@ -748,18 +731,7 @@ class PackupModal extends Modal {
     }
 
     try {
-      // Check if D3 is available from the plugin
-      if (!this.plugin.d3) {
-        this.vizContainer.empty();
-        this.vizContainer.createEl('div', {
-          cls: 'packup4ai-error',
-          text: 'D3.js not available. Visualization cannot be rendered.'
-        });
-        return;
-      }
-      
-      // Use d3 from the plugin instance
-      const d3 = this.plugin.d3;
+      // D3 is available at module level, no need to check
 
       // Convert data to D3 format
       const nodes = this.collectedData.map(item => {

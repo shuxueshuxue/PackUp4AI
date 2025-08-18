@@ -17,7 +17,7 @@ async function build() {
       entryPoints: ['src/main.js'],
       bundle: true,
       outfile: 'main.js',
-      platform: 'node',
+      platform: 'browser',
       external: ['obsidian'],
       format: 'cjs',
       target: 'es2016',
