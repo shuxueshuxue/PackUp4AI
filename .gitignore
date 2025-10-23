@@ -15,6 +15,9 @@ node_modules/
 .idea/
 .vscode/
 
+# AI guidance files
+CLAUDE.md
+
 # Temporary files
 *.tmp
 *.bak

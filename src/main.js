@@ -145,10 +145,10 @@ class Packup4AIPlugin extends Plugin {
     if (this.settings.includeBacklinks) {
       const backlinks = this.app.metadataCache.getBacklinksForFile(file);
       if (backlinks && backlinks.data) {
-        for (const backlinkPath in backlinks.data) {
-          const file = this.app.vault.getAbstractFileByPath(backlinkPath);
-          if (file && file.extension === "md") {
-            relatedFiles.add(file);
+        for (const [backlinkPath, references] of backlinks.data) {
+          const backlinkFile = this.app.vault.getAbstractFileByPath(backlinkPath);
+          if (backlinkFile && backlinkFile.extension === "md") {
+            relatedFiles.add(backlinkFile);
           }
         }
       }
